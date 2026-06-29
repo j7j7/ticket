@@ -8,6 +8,8 @@ import re
 import time
 from typing import Optional
 
+from src.exceptions import TimeoutError as TicketTimeoutError
+
 # ------------------------------------------------------------------
 # Countdown watcher
 # ------------------------------------------------------------------
@@ -61,7 +63,7 @@ class CountdownWatcher:
             if secs is not None and secs <= target:
                 return raw, secs
             time.sleep(poll_interval)
-        raise TimeoutError(
+        raise TicketTimeoutError(
             f"Countdown never reached {target}s (last value: {self._latest_raw})"
         )
 
@@ -77,7 +79,7 @@ class CountdownWatcher:
             if secs is not None and initial is not None and secs < initial:
                 return raw, secs
             time.sleep(poll_interval)
-        raise TimeoutError("Countdown value never changed")
+        raise TicketTimeoutError("Countdown value never changed")
 
     # ------------------------------------------------------------------
     # Helpers
@@ -127,7 +129,7 @@ class TextWatcher:
             if text in val:
                 return val
             time.sleep(poll_interval)
-        raise TimeoutError(f"Element '{self.selector}' never contained '{text}'")
+        raise TicketTimeoutError(f"Element '{self.selector}' never contained '{text}'")
 
     def wait_until_not_contains(self, text: str, *, timeout: int = None, poll_interval: float = 0.5):
         deadline = time.time() + ((timeout or self.bot._timeout()) / 1000)
@@ -136,7 +138,7 @@ class TextWatcher:
             if text not in val:
                 return val
             time.sleep(poll_interval)
-        raise TimeoutError(f"Element '{self.selector}' never stopped containing '{text}'")
+        raise TicketTimeoutError(f"Element '{self.selector}' never stopped containing '{text}'")
 
 
 # ------------------------------------------------------------------
@@ -146,7 +148,10 @@ class TextWatcher:
 
 def wait_for_url_change(bot, *, timeout: int = None, poll_interval: float = 0.3):
     """Return the new URL after the page navigates (waits for change from current URL)."""
-    current = bot.page.url
+    try:
+        current = bot.page.url
+    except Exception:
+        current = ""
     deadline = time.time() + ((timeout or bot._timeout()) / 1000)
     while time.time() < deadline:
         time.sleep(poll_interval)
@@ -154,6 +159,6 @@ def wait_for_url_change(bot, *, timeout: int = None, poll_interval: float = 0.3)
             new_url = bot.page.url
         except Exception:
             continue
-        if new_url != current:
+        if new_url and new_url != current:
             return new_url
-    raise TimeoutError("URL never changed from " + current)
+    raise TicketTimeoutError("URL never changed from " + current)

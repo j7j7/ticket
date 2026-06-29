@@ -3,13 +3,14 @@
 Example automation script — run with:
 
     python src/main.py <url> --script scripts/example.py
+    python src/main.py <url> --script scripts/example.py --record recordings/test
+    python src/main.py <url> --script scripts/example.py --manual-login --record recordings/test
 
-This script will be called with `bot` (a PageBot instance) already navigated
-to the target URL.
+This script receives `bot` (a PageBot instance) already navigated to the target URL.
+If recording is active, `recorder` is also available.
 """
 
 import time
-from src.observer import CountdownWatcher, TextWatcher
 
 
 def run(bot):
@@ -26,6 +27,8 @@ def run(bot):
         bot.click_text("Start")
 
     # 3. Wait for a countdown element and watch it tick down
+    from src.observer import CountdownWatcher, TextWatcher
+
     if bot.exists("#timer"):
         watcher = CountdownWatcher(bot, "#timer")
         raw, secs = watcher.read()
@@ -46,6 +49,11 @@ def run(bot):
     # 5. Take a screenshot
     path = bot.screenshot("result.png")
     print(f"Screenshot saved: {path}")
+
+    # 6. If recording, take named snapshots
+    if "recorder" in dir() and recorder:
+        recorder.snapshot("after_actions")
+        print("Recording snapshot taken: after_actions")
 
     print("--- Example script finished ---")
 
