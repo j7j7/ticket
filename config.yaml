@@ -1,0 +1,11 @@
+# Browser automation config — override per-run or with config.local.yaml
+browser:
+  headless: false          # false = visible browser so you can watch it
+  slow_mo: 100             # ms delay between actions (helps see what's happening)
+  viewport:
+    width: 1280
+    height: 800
+
+defaults:
+  timeout: 15000           # default wait timeout in ms
+  poll_interval: 0.5       # seconds between poll checks (for observers)
